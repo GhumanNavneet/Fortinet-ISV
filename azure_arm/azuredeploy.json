@@ -46,8 +46,8 @@
     }
   },
   "variables": {
-    "fortinetVmSize": "Standard_F2s_v2",
-    "webVmSize": "Standard_F2s_v2",
+    "fortinetVmSize": "Standard_D2_v2",
+    "webVmSize": "Standard_D2_v2",
     "storageAccountType": "Premium_LRS",
     "diagStorageAccountName": "[concat('diagstorage',uniqueString(resourceGroup().id))]",
     "virtualNetworkName": "fortinet-vnet",
@@ -87,23 +87,28 @@
   },
   "resources": [
     {
+      "apiVersion": "2016-09-01",
+      "name": "pid-e843308b-3ce2-42a2-b743-2f21b36a5e68",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": []
+        }
+      }
+    },
+    {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('diagStorageAccountName')]",
       "apiVersion": "2016-01-01",
       "location": "[resourceGroup().location]",
-      "comments": "Storage account used to store VM diagnostics data",
-      "tags": {
-        "displayName": "Diagnostics Storage Account",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('barracudaNetworksTags').provider]"
-      },
       "sku": {
-        "name": "Standard_LRS"
+        "name": "[variables('storageAccountType')]"
       },
       "kind": "Storage",
-      "properties": {
-
-      }
+      "properties": {}
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
@@ -145,59 +150,59 @@
             }
           },
           {
-           "name": "AllowDevRegInbound",
+            "name": "AllowDevRegInbound",
             "properties": {
-            "description": "Allow 514 in for device registration",
-            "protocol": "Tcp",
-            "sourcePortRange": "*",
-            "destinationPortRange": "514",
-            "sourceAddressPrefix": "*",
-            "destinationAddressPrefix": "*",
-            "access": "Allow",
-            "priority": 130,
-            "direction": "Inbound"
+              "description": "Allow 514 in for device registration",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "514",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound"
             }
           },
           {
-          "name": "AllowMgmtHTTPSInbound",
-          "properties": {
-          "description": "Allow 8443 In",
-          "protocol": "Tcp",
-          "sourcePortRange": "*",
-          "destinationPortRange": "8443",
-          "sourceAddressPrefix": "*",
-          "destinationAddressPrefix": "*",
-          "access": "Allow",
-          "priority": 140,
-          "direction": "Inbound"
-          }
-          },
-          {
-           "name": "AllowMgmtHTTPInbound",
+            "name": "AllowMgmtHTTPSInbound",
             "properties": {
-            "description": "Allow 8080 In",
-            "protocol": "Tcp",
-            "sourcePortRange": "*",
-            "destinationPortRange": "8080",
-            "sourceAddressPrefix": "*",
-            "destinationAddressPrefix": "*",
-            "access": "Allow",
-            "priority": 150,
-            "direction": "Inbound"
+              "description": "Allow 8443 In",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 140,
+              "direction": "Inbound"
             }
           },
           {
-           "name": "AllowAllOutbound",
+            "name": "AllowMgmtHTTPInbound",
             "properties": {
-            "description": "Allow all out",
-            "protocol": "*",
-            "sourcePortRange": "*",
-            "destinationPortRange": "*",
-            "sourceAddressPrefix": "*",
-            "destinationAddressPrefix": "*",
-            "access": "Allow",
-            "priority": 105,
-            "direction": "Outbound"
+              "description": "Allow 8080 In",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8080",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 150,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowAllOutbound",
+            "properties": {
+              "description": "Allow all out",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 105,
+              "direction": "Outbound"
             }
           },
           {
@@ -222,25 +227,19 @@
       "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "comments": " NSG for Web subnet",
-      "tags": {
-        "displayName": "Web NSG",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('barracudaNetworksTags').provider]"
-      },
       "properties": {
         "securityRules": [
           {
-            "name": "SSH-Allow",
+            "name": "RDP-allow",
             "properties": {
-            "description": "Allow SSH In",
-            "protocol": "Tcp",
-            "sourcePortRange": "*",
-            "destinationPortRange": "22",
-            "sourceAddressPrefix": "*",
-            "destinationAddressPrefix": "*",
-            "access": "Allow",
-            "priority": 100,
-            "direction": "Inbound"
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "10.0.1.0/24",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
             }
           }
         ]
@@ -252,11 +251,6 @@
       "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "comments": " Public IP used by the fortinet VM",
-      "tags": {
-        "displayName": "fortinet Public IP",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('barracudaNetworksTags').provider]"
-      },
       "properties": {
         "publicIPAllocationMethod": "Static",
         "idleTimeoutInMinutes": 4,
@@ -271,11 +265,6 @@
       "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "comments": "Public IP used by the Load Balancer for RDP into Web Servers",
-      "tags": {
-        "displayName": "LB Public IP",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('barracudaNetworksTags').provider]"
-      },
       "properties": {
         "publicIPAllocationMethod": "Static",
         "idleTimeoutInMinutes": 4,
@@ -290,11 +279,6 @@
       "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "comments": "Virtual network for overall solution",
-      "tags": {
-        "displayName": "fortinet Virtual Network",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('barracudaNetworksTags').provider]"
-      },
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('webNSGName'))]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('fortinetNSGName'))]"
@@ -333,11 +317,6 @@
       "apiVersion": "2017-12-01",
       "location": "[resourceGroup().location]",
       "comments": "This is the Availability Set for all Web VMs",
-      "tags": {
-        "displayName": "Web Avail Set",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('barracudaNetworksTags').provider]"
-      },
       "properties": {
         "PlatformUpdateDomainCount": 1,
         "PlatformFaultDomainCount": 2
@@ -352,11 +331,6 @@
       "apiVersion": "2017-12-01",
       "location": "[resourceGroup().location]",
       "comments": "This is the Availability Set for fortinet VM",
-      "tags": {
-        "displayName": "fortinet Avail Set",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('barracudaNetworksTags').provider]"
-      },
       "properties": {
         "PlatformUpdateDomainCount": 1,
         "PlatformFaultDomainCount": 2
@@ -371,11 +345,6 @@
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "comments": "This Load Balancer is used to allow RDP access to Web VMs",
-      "tags": {
-        "displayName": "Web RDP Load Balancer",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('barracudaNetworksTags').provider]"
-      },
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('lbIPAddressName'))]"
       ],
@@ -403,11 +372,6 @@
       "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "comments": "This resource adds all the NAT rules needed to allow RDP access to Web Servers VMs",
-      "tags": {
-        "displayName": "LB RDP NAT rules",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('barracudaNetworksTags').provider]"
-      },
       "dependsOn": [
         "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
       ],
@@ -431,11 +395,6 @@
       "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "comments": "NICs for Web Servers",
-      "tags": {
-        "displayName": "Web VM NICs",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('barracudaNetworksTags').provider]"
-      },
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[concat('Microsoft.Network/loadBalancers/',variables('loadBalancerName'),'/inboundNatRules/', 'RDPVM', copyIndex(1))]"
@@ -474,11 +433,6 @@
       "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "comments": "NIC for fortinet VM",
-      "tags": {
-        "displayName": "fortinet VM NIC",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('barracudaNetworksTags').provider]"
-      },
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[concat(resourceId('Microsoft.Network/publicIPAddresses', variables('fortinetVmIPAddressName')))]"
