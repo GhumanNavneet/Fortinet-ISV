@@ -48,7 +48,7 @@
   "variables": {
     "fortinetVmSize": "Standard_F2s_v2",
     "webVmSize": "Standard_F2s_v2",
-    "storageAccountType": "Premium_LRS",
+    "storageAccountType": "Standard_LRS",
     "diagStorageAccountName": "[concat('diagstorage',uniqueString(resourceGroup().id))]",
     "virtualNetworkName": "fortinet-vnet",
     "webNSGName": "web-NSG",
